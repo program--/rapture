@@ -1,0 +1,30 @@
+Package: rapture
+Title: Raster Capture: Rasterize spatial point data onto basemaps
+Version: 0.0.1.9000
+Authors@R: 
+    person(given = "Justin",
+           family = "Singh-Mohudpur",
+           role = c("aut", "cre"),
+           email = "justin@justinsingh.me",
+           comment = c(ORCID = "0000-0002-5233-5799"))
+Description: Rasterizes points onto base maps, similarly to the
+             Python package `datashader` and the R package `rasterly`.
+URL: https://rapture.justinsingh.me, https://github.com/program--/rapture
+BugReports: https://github.com/program--/rapture/issues
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.2
+SystemRequirements: C++11
+Depends:
+    R (>= 3.5.0)
+Imports:
+    basemaps (>= 0.0.1),
+    Matrix,
+    methods,
+    stars    (>= 0.5.0),
+    sf       (>= 1.0.0),
+    tmap     (>= 3.3.0)
+LinkingTo:
+    cpp11

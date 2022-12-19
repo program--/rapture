@@ -1,4 +1,4 @@
-package rapture
+package grid
 
 import "sort"
 

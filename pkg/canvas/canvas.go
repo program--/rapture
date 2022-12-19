@@ -1,12 +1,13 @@
-package rapture
+package canvas
 
 import (
 	"image"
 	"image/color"
+	"rapture/pkg/grid"
 )
 
 type Canvas struct {
-	grid       Grid
+	grid       grid.Grid
 	colorspace color.Model
 }
 
@@ -15,7 +16,7 @@ func (this *Canvas) Render() image.Image {
 	filled_cells := this.grid.Cells()
 	for i := 0; i < len(filled_cells); i++ {
 		cell := filled_cells[i]
-		img.Set(cell.col, cell.row, this.Color(cell.val))
+		img.Set(cell.Col, cell.Row, this.Color(cell.Val))
 	}
 
 	return img

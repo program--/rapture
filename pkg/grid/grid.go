@@ -1,11 +1,11 @@
-package rapture
+package grid
 
 import "image"
 
 type GridCell struct {
-	val any
-	col int // a.k.a. x-coordinate
-	row int // a.k.a. y-coordinate
+	Val any
+	Col int // a.k.a. x-coordinate
+	Row int // a.k.a. y-coordinate
 }
 
 type Grid struct {

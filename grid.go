@@ -34,11 +34,11 @@ func (this *Grid) Dim() (int, int) {
 	return this.Width(), this.Height()
 }
 
-func (this *Grid) Values() []GridCell {
+func (this *Grid) Cells() []GridCell {
 	return this.cells
 }
 
-func (this *Grid) Cells() int {
+func (this *Grid) NumCells() int {
 	return this.Width() * this.Height()
 }
 

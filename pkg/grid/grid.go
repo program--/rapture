@@ -10,8 +10,8 @@ type GridCell struct {
 
 type Grid struct {
 	cells []GridCell
-	xAxis Axis
-	yAxis Axis
+	xAxis *Axis
+	yAxis *Axis
 }
 
 // Returns grid extent as xmin, xmax, ymin, ymax
@@ -50,14 +50,14 @@ func (this *Grid) Index(x float64, y float64) (int, int) {
 // Adds a point-value to the grid
 func (this *Grid) AddCell(x float64, y float64, val any) {
 	col, row := this.Index(x, y)
-	this.cells = append(this.cells, GridCell{val, col, row})
+	this.cells = append(this.cells, GridCell{val, col, this.yAxis.length - row})
 }
 
 func (this *Grid) Rect() image.Rectangle {
 	return image.Rect(0, 0, this.Width(), this.Height())
 }
 
-func NewGrid(xAxis Axis, yAxis Axis) *Grid {
+func NewGrid(xAxis *Axis, yAxis *Axis) *Grid {
 	cells := make([]GridCell, 0)
 	return &Grid{cells, xAxis, yAxis}
 }

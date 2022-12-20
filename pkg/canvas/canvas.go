@@ -15,8 +15,8 @@ func (this *Canvas) Render() image.Image {
 	img := image.NewRGBA(this.grid.Rect())
 	this.Fill(img, color.RGBA{R: 0, G: 0, B: 0, A: 255})
 	filled_cells := this.grid.Cells()
-	for i := 0; i < len(filled_cells); i++ {
-		cell := filled_cells[i]
+	for i := 0; i < filled_cells.Len(); i++ {
+		cell := filled_cells.At(i)
 		img.Set(cell.Col, cell.Row, this.Color(cell.Val))
 	}
 

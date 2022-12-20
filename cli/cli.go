@@ -10,7 +10,7 @@ import (
 	"github.com/tidwall/geojson"
 )
 
-func Run(path string) {
+func Run(path string, width int, height int, output string) {
 	s, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
@@ -29,9 +29,9 @@ func Run(path string) {
 	ymax := rect.Max.Y
 
 	// Setup Grid
-	xax := grid.NewAxis(xmin, xmax, 3200)
-	yax := grid.NewAxis(ymin, ymax, 3200)
-	grd := grid.NewGrid(xax, yax)
+	xax := grid.NewAxis(xmin, xmax, width)
+	yax := grid.NewAxis(ymin, ymax, height)
+	grd := grid.NewGrid(xax, yax, g.NumPoints())
 
 	// Add Points
 	fmt.Println("Adding points...")
@@ -40,13 +40,17 @@ func Run(path string) {
 		grd.AddCell(pt.X, pt.Y, nil)
 		return true
 	})
-	fmt.Printf("Added %d points\n", len(grd.Cells()))
 
+	fmt.Printf("Added %d points\n", grd.Cells().Len())
 	cvs := canvas.NewCanvas(grd)
 	fmt.Println("Rendering")
 	img := cvs.Render()
 
-	f, _ := os.Create("example/pts.png")
+	f, err := os.Create(output)
+	if err != nil {
+		panic(err)
+	}
+
 	err = png.Encode(f, img)
 	if err != nil {
 		panic(err)

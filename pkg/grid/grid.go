@@ -9,7 +9,7 @@ type GridCell struct {
 }
 
 type Grid struct {
-	cells []GridCell
+	cells *Cells
 	xAxis *Axis
 	yAxis *Axis
 }
@@ -34,7 +34,7 @@ func (this *Grid) Dim() (int, int) {
 	return this.Width(), this.Height()
 }
 
-func (this *Grid) Cells() []GridCell {
+func (this *Grid) Cells() *Cells {
 	return this.cells
 }
 
@@ -44,20 +44,19 @@ func (this *Grid) NumCells() int {
 
 // Index a coordinate pair onto a grid. X or Y can be -1 if they are outside the grid.
 func (this *Grid) Index(x float64, y float64) (int, int) {
-	return this.xAxis.Index(x), this.yAxis.Index(y)
+	return this.xAxis.Index(x, false), this.yAxis.Index(y, true)
 }
 
 // Adds a point-value to the grid
 func (this *Grid) AddCell(x float64, y float64, val any) {
 	col, row := this.Index(x, y)
-	this.cells = append(this.cells, GridCell{val, col, this.yAxis.length - row})
+	this.cells.AddCell(col, row, val)
 }
 
 func (this *Grid) Rect() image.Rectangle {
 	return image.Rect(0, 0, this.Width(), this.Height())
 }
 
-func NewGrid(xAxis *Axis, yAxis *Axis) *Grid {
-	cells := make([]GridCell, 0)
-	return &Grid{cells, xAxis, yAxis}
+func NewGrid(xAxis *Axis, yAxis *Axis, points int) *Grid {
+	return &Grid{NewCells(points), xAxis, yAxis}
 }

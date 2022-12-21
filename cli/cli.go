@@ -37,11 +37,15 @@ func Run(path string, width int, height int, output string) {
 	fmt.Println("Adding points...")
 	g.ForEach(func(geom geojson.Object) bool {
 		pt := geom.Center()
-		grd.AddCell(pt.X, pt.Y, nil)
+		grd.AddCell(pt.X, pt.Y, 1)
 		return true
 	})
 
 	fmt.Printf("Added %d points\n", grd.Cells().Len())
+
+	fmt.Println("Condensing values")
+	grd.Cells().Condense(canvas.Density)
+
 	cvs := canvas.NewCanvas(grd)
 	fmt.Println("Rendering")
 	img := cvs.Render()

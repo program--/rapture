@@ -1,5 +1,9 @@
 package grid
 
+import (
+	"math"
+)
+
 type Cell struct {
 	Val any
 	Col int
@@ -48,6 +52,32 @@ func (this *Cells) AddCell(col int, row int, val any) {
 	this.Rows = append(this.Rows, row)
 }
 
+func (this *Cells) Condense(f func(any, any) any) {
+	index := make(map[int64]any)
+	for i := 0; i < this.Len(); i++ {
+		key := elepair(this.Cols[i], this.Rows[i])
+		if _, ok := index[key]; ok {
+			index[key] = f(index[key], this.Vals[i])
+		} else {
+			index[key] = f(0, this.Vals[i])
+		}
+	}
+
+	new_len := len(index)
+	if new_len != this.Len() {
+		this.Cols = make([]int, 0, new_len)
+		this.Rows = make([]int, 0, new_len)
+		this.Vals = make([]any, 0, new_len)
+
+		for k, v := range index {
+			col, row := eleunpair(k)
+			this.Cols = append(this.Cols, col)
+			this.Rows = append(this.Rows, row)
+			this.Vals = append(this.Vals, v)
+		}
+	}
+}
+
 func (this *Cells) Len() int {
 	return len(this.Cols)
 }
@@ -61,5 +91,25 @@ func (this *Cells) At(index int) *Cell {
 		Val: this.Vals[index],
 		Col: this.Cols[index],
 		Row: this.Rows[index],
+	}
+}
+
+func elepair(x int, y int) int64 {
+	if x < y {
+		return int64(math.Pow(float64(y), 2.0) + float64(x))
+	} else {
+		return int64(math.Pow(float64(x), 2.0) + float64(x) + float64(y))
+	}
+}
+
+func eleunpair(z int64) (int, int) {
+	sqfl := math.Floor(math.Sqrt(float64(z)))
+	sqflsq := math.Pow(sqfl, 2.0)
+	zf := float64(z)
+
+	if zf-sqflsq < sqfl {
+		return int(zf - sqflsq), int(sqfl)
+	} else {
+		return int(sqfl), int(zf - sqflsq - sqfl)
 	}
 }

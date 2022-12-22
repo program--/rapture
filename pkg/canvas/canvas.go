@@ -32,14 +32,8 @@ func (this *Canvas) Fill(img *image.RGBA, c color.Color) {
 }
 
 func (this *Canvas) Color(val any) color.Color {
-	var n uint8
-	v := reflect.ValueOf(val).Int()
-	if v*5 > 255 {
-		n = uint8(255)
-	} else {
-		n = uint8(v * 5)
-	}
-	return color.RGBA{R: n, G: n, B: n, A: 255}
+	v := reflect.ValueOf(val).Float()
+	return color.RGBA{R: 250, G: 0, B: 0, A: uint8(v*100 + 100)}
 }
 
 func NewCanvas(grid *grid.Grid) *Canvas {

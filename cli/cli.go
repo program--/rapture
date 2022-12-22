@@ -5,6 +5,7 @@ import (
 	"image/png"
 	"os"
 	"rapture/pkg/canvas"
+	"rapture/pkg/geometry"
 	"rapture/pkg/grid"
 
 	"github.com/tidwall/geojson"
@@ -16,12 +17,14 @@ func Run(path string, width int, height int, output string) {
 		panic(err)
 	}
 
+	fmt.Println("Parsing file...")
 	g, err := geojson.Parse(string(s), geojson.DefaultParseOptions)
 	if err != nil {
 		panic(err)
 	}
 
 	// Get Extent
+	fmt.Println("Getting extent...")
 	rect := g.Rect()
 	xmin := rect.Min.X
 	ymin := rect.Min.Y
@@ -29,22 +32,19 @@ func Run(path string, width int, height int, output string) {
 	ymax := rect.Max.Y
 
 	// Setup Grid
+	fmt.Println("Setting up grid...")
 	xax := grid.NewAxis(xmin, xmax, width)
 	yax := grid.NewAxis(ymin, ymax, height)
 	grd := grid.NewGrid(xax, yax, g.NumPoints())
 
 	// Add Points
 	fmt.Println("Adding points...")
-	g.ForEach(func(geom geojson.Object) bool {
-		pt := geom.Center()
-		grd.AddCell(pt.X, pt.Y, 1)
-		return true
-	})
+	summary := geometry.MapToGrid(g, grd)
 
 	fmt.Printf("Added %d points\n", grd.Cells().Len())
 
 	fmt.Println("Condensing values")
-	grd.Cells().Condense(canvas.Density)
+	grd.Cells().Condense(canvas.Density, summary.MaxVal)
 
 	cvs := canvas.NewCanvas(grd)
 	fmt.Println("Rendering")

@@ -22,6 +22,8 @@ func NewCells(size int) *Cells {
 	return cells
 }
 
+// Allocate size to cells arrays. If cells is already used,
+// then initial values are copied to newly allocated arrays.
 func (this *Cells) Allocate(size int) {
 	tot_cap := this.Cap() + size
 	l := this.Len()
@@ -40,6 +42,7 @@ func (this *Cells) Allocate(size int) {
 	this.Rows = rows
 }
 
+// Add cell with given col, row, and value
 func (this *Cells) AddCell(col int, row int, val any) {
 	iter := this.Len()
 	if iter >= this.Cap() {
@@ -52,14 +55,15 @@ func (this *Cells) AddCell(col int, row int, val any) {
 	this.Rows = append(this.Rows, row)
 }
 
-func (this *Cells) Condense(f func(any, any) any) {
+// applies a function across all allocated cells
+func (this *Cells) Condense(f func(any, any, any) any, opts any) {
 	index := make(map[int64]any)
 	for i := 0; i < this.Len(); i++ {
 		key := elepair(this.Cols[i], this.Rows[i])
 		if _, ok := index[key]; ok {
-			index[key] = f(index[key], this.Vals[i])
+			index[key] = f(index[key], this.Vals[i], opts)
 		} else {
-			index[key] = f(0, this.Vals[i])
+			index[key] = f(0.0, this.Vals[i], opts)
 		}
 	}
 
@@ -78,14 +82,17 @@ func (this *Cells) Condense(f func(any, any) any) {
 	}
 }
 
+// returns number of cells
 func (this *Cells) Len() int {
 	return len(this.Cols)
 }
 
+// returns allocation size of cells
 func (this *Cells) Cap() int {
 	return cap(this.Cols)
 }
 
+// returns cell at input index
 func (this *Cells) At(index int) *Cell {
 	return &Cell{
 		Val: this.Vals[index],

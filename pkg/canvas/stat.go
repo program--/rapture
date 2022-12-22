@@ -1,9 +1,12 @@
 package canvas
 
-import "reflect"
+import (
+	"reflect"
+)
 
-func Density(a any, b any) any {
+func Density(a any, b any, max any) any {
 	ai := reflect.ValueOf(a)
 	bi := reflect.ValueOf(b)
-	return ai.Int() + bi.Int()
+	mx := reflect.ValueOf(max)
+	return (ai.Float() + bi.Float()) / mx.Float()
 }

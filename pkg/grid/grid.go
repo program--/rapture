@@ -1,6 +1,8 @@
 package grid
 
-import "image"
+import (
+	"image"
+)
 
 type GridCell struct {
 	Val any
@@ -51,6 +53,19 @@ func (this *Grid) Index(x float64, y float64) (int, int) {
 func (this *Grid) AddCell(x float64, y float64, val any) {
 	col, row := this.Index(x, y)
 	this.cells.AddCell(col, row, val)
+}
+
+// Adds coordinates associated to a line segment to the grid
+func (this *Grid) AddLine(x1 float64, y1 float64, x2 float64, y2 float64, val any) {
+	col1, row1 := this.Index(x1, y1)
+	col2, row2 := this.Index(x2, y2)
+	colDiff := col2 - col1
+	rowDiff := row2 - row1
+
+	for col_idx := col1; col_idx < col2; col_idx++ {
+		row_idx := ((rowDiff)/(colDiff))*(col_idx-col1) + row1
+		this.cells.AddCell(col_idx, row_idx, val)
+	}
 }
 
 func (this *Grid) Rect() image.Rectangle {

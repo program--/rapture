@@ -9,3 +9,16 @@ rapture -i="path/to/example.geojson" -w=1000 -h=1000 -o="docs/pts.png"
 ```
 
 ![](docs/pts.png)
+
+## Roadmap
+
+- Visualization
+    - Geometry
+        - [ ] Lines
+        - [ ] Polygons
+    - [ ] Basemaps
+    - [ ] Color Ramps
+    - [ ] Property Selection
+- Statistics
+    - [ ] Density
+    - [ ] Custom Functions

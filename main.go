@@ -18,6 +18,7 @@ Usage: rapture -i (input) -o (output) [options]
 var path string
 var output string
 var stat string
+var prop string
 var width int
 var height int
 var bbox string
@@ -35,6 +36,9 @@ func init() {
 
 	flag.IntVar(&height, "height", 800, "height of output")
 	flag.IntVar(&height, "h", 800, "height of output")
+
+	flag.StringVar(&prop, "property", "", "property to use from input")
+	flag.StringVar(&prop, "p", "", "property to use from input")
 
 	flag.StringVar(&stat, "stat", "density", "function for displaying values, can be one of: density, mean")
 	flag.StringVar(&stat, "s", "density", "function for displaying values, can be one of: density, mean")
@@ -61,6 +65,6 @@ func main() {
 		fmt.Print(usage)
 		os.Exit(1)
 	} else {
-		cli.Run(path, width, height, output)
+		cli.Run(path, width, height, output, prop)
 	}
 }

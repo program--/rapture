@@ -2,6 +2,7 @@ package grid
 
 import (
 	"math"
+	"reflect"
 )
 
 type Cell struct {
@@ -14,6 +15,12 @@ type Cells struct {
 	Vals []any
 	Cols []int // x
 	Rows []int // y
+}
+
+type GridSummary struct {
+	MaxVal float64
+	MinVal float64
+	AvgVal float64
 }
 
 func NewCells(size int) *Cells {
@@ -56,7 +63,7 @@ func (this *Cells) AddCell(col int, row int, val any) {
 }
 
 // applies a function across all allocated cells
-func (this *Cells) Condense(f func(any, any, any) any, opts any) {
+func (this *Cells) Condense(f func(any, any, any) any, opts any) *GridSummary {
 	index := make(map[int64]any)
 	for i := 0; i < this.Len(); i++ {
 		key := elepair(this.Cols[i], this.Rows[i])
@@ -65,6 +72,12 @@ func (this *Cells) Condense(f func(any, any, any) any, opts any) {
 		} else {
 			index[key] = f(0.0, this.Vals[i], opts)
 		}
+	}
+
+	summary := &GridSummary{
+		MaxVal: math.Inf(-1),
+		MinVal: math.Inf(1),
+		AvgVal: 0.0,
 	}
 
 	new_len := len(index)
@@ -78,8 +91,23 @@ func (this *Cells) Condense(f func(any, any, any) any, opts any) {
 			this.Cols = append(this.Cols, col)
 			this.Rows = append(this.Rows, row)
 			this.Vals = append(this.Vals, v)
+
+			rv := reflect.ValueOf(v).Float()
+			if rv < summary.MinVal {
+				summary.MinVal = rv
+			}
+
+			if rv > summary.MaxVal {
+				summary.MaxVal = rv
+			}
+
+			summary.AvgVal += rv
 		}
+
+		summary.AvgVal /= float64(new_len)
 	}
+
+	return summary
 }
 
 // returns number of cells

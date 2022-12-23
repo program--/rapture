@@ -1,6 +1,7 @@
 package canvas
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"rapture/pkg/grid"
@@ -9,15 +10,28 @@ import (
 
 type Canvas struct {
 	grid *grid.Grid
+	ramp *ColorRamp
+	summ *grid.GridSummary
 }
 
 func (this *Canvas) Render() image.Image {
 	img := image.NewRGBA(this.grid.Rect())
 	this.Fill(img, color.RGBA{R: 0, G: 0, B: 0, A: 255})
+
+	color_axis := grid.NewAxis(this.summ.MinVal, this.summ.MaxVal, this.ramp.steps)
+
 	filled_cells := this.grid.Cells()
 	for i := 0; i < filled_cells.Len(); i++ {
 		cell := filled_cells.At(i)
-		img.Set(cell.Col, cell.Row, this.Color(cell.Val))
+		cellVal := reflect.ValueOf(cell.Val).Float()
+		colorIndex := color_axis.Index(cellVal, true)
+		cellColor := this.Color(colorIndex)
+
+		if cellColor == nil {
+			panic("cell color is nil")
+		}
+
+		img.Set(cell.Col, cell.Row, cellColor)
 	}
 
 	return img
@@ -31,11 +45,21 @@ func (this *Canvas) Fill(img *image.RGBA, c color.Color) {
 	}
 }
 
-func (this *Canvas) Color(val any) color.Color {
-	v := reflect.ValueOf(val).Float()
-	return color.RGBA{R: 250, G: 0, B: 0, A: uint8(v*100 + 100)}
+func (this *Canvas) Color(idx int) color.Color {
+	return this.ramp.Generate(idx)
 }
 
-func NewCanvas(grid *grid.Grid) *Canvas {
-	return &Canvas{grid: grid}
+func NewCanvas(grid *grid.Grid, s *grid.GridSummary) *Canvas {
+	fc, _ := ColorFromHex("#FFFF00")
+	ec, _ := ColorFromHex("#000000")
+	fmt.Println(*s)
+	return &Canvas{
+		grid: grid,
+		ramp: NewColorRamp(
+			fc,
+			ec,
+			100,
+		),
+		summ: s,
+	}
 }

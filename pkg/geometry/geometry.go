@@ -1,43 +1,28 @@
 package geometry
 
 import (
+	"encoding/json"
 	"math"
 	"rapture/pkg/grid"
 
 	"github.com/tidwall/geojson"
 )
 
-type GeojsonSummary struct {
-	MaxVal float64
-	MinVal float64
-	AvgVal float64
-}
-
-func MapToGrid(g geojson.Object, grd *grid.Grid) *GeojsonSummary {
-	summary := &GeojsonSummary{
-		MaxVal: math.Inf(-1),
-		MinVal: math.Inf(1),
-		AvgVal: 0.0,
-	}
-
+func MapToGrid(g geojson.Object, p string, grd *grid.Grid) {
+	var v float64
+	reuse := new(map[string]interface{})
 	g.ForEach(func(geom geojson.Object) bool {
-		p := geom.Center()
-		v := 1.0
+		pt := geom.Center()
+		js := geom.(*geojson.Feature).JSON()
+		json.Unmarshal([]byte(js), reuse)
 
-		if v > summary.MaxVal {
-			summary.MaxVal = v
+		if value, ok := (*reuse)["properties"].(map[string]interface{})[p]; ok {
+			v = value.(float64)
+		} else {
+			v = math.Inf(-1)
 		}
 
-		if v < summary.MinVal {
-			summary.MinVal = v
-		}
-
-		summary.AvgVal += v
-		grd.AddCell(p.X, p.Y, v)
+		grd.AddCell(pt.X, pt.Y, v)
 		return true
 	})
-
-	summary.AvgVal = summary.AvgVal / float64(grd.Cells().Len())
-
-	return summary
 }

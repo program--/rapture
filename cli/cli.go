@@ -11,42 +11,33 @@ import (
 	"github.com/tidwall/geojson"
 )
 
-func Run(path string, width int, height int, output string) {
+func Run(path string, width int, height int, output string, property string) {
+	// Read File
 	s, err := os.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
 
+	// Parse GeoJSON (currently bottleneck)
 	fmt.Println("Parsing file...")
 	g, err := geojson.Parse(string(s), geojson.DefaultParseOptions)
 	if err != nil {
 		panic(err)
 	}
 
-	// Get Extent
-	fmt.Println("Getting extent...")
-	rect := g.Rect()
-	xmin := rect.Min.X
-	ymin := rect.Min.Y
-	xmax := rect.Max.X
-	ymax := rect.Max.Y
-
-	// Setup Grid
-	fmt.Println("Setting up grid...")
-	xax := grid.NewAxis(xmin, xmax, width)
-	yax := grid.NewAxis(ymin, ymax, height)
-	grd := grid.NewGrid(xax, yax, g.NumPoints())
+	// Create Grid
+	fmt.Println("Creating grid...")
+	grd := grid.NewGridFromGeojson(g, width, height)
 
 	// Add Points
 	fmt.Println("Adding points...")
-	summary := geometry.MapToGrid(g, grd)
-
+	geometry.MapToGrid(g, property, grd)
 	fmt.Printf("Added %d points\n", grd.Cells().Len())
 
 	fmt.Println("Condensing values")
-	grd.Cells().Condense(canvas.Density, summary.MaxVal)
+	summary := grd.Cells().Condense(canvas.Density, nil)
 
-	cvs := canvas.NewCanvas(grd)
+	cvs := canvas.NewCanvas(grd, summary)
 	fmt.Println("Rendering")
 	img := cvs.Render()
 

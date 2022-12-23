@@ -4,9 +4,8 @@ import (
 	"reflect"
 )
 
-func Density(a any, b any, max any) any {
+func Density(a any, b any, _ any) any {
 	ai := reflect.ValueOf(a)
 	bi := reflect.ValueOf(b)
-	mx := reflect.ValueOf(max)
-	return (ai.Float() + bi.Float()) / mx.Float()
+	return ai.Float() + bi.Float()
 }

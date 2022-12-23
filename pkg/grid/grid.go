@@ -2,6 +2,8 @@ package grid
 
 import (
 	"image"
+
+	"github.com/tidwall/geojson"
 )
 
 type GridCell struct {
@@ -74,4 +76,21 @@ func (this *Grid) Rect() image.Rectangle {
 
 func NewGrid(xAxis *Axis, yAxis *Axis, points int) *Grid {
 	return &Grid{NewCells(points), xAxis, yAxis}
+}
+
+// Creates a new grid from a given geojson object.
+func NewGridFromGeojson(g geojson.Object, width int, height int) *Grid {
+	// Get extent
+	rect := g.Rect()
+	xmin := rect.Min.X
+	ymin := rect.Min.Y
+	xmax := rect.Max.X
+	ymax := rect.Max.Y
+
+	// Setup Axes
+	xax := NewAxis(xmin, xmax, width)
+	yax := NewAxis(ymin, ymax, height)
+
+	// Setup Grid
+	return NewGrid(xax, yax, g.NumPoints())
 }

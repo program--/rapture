@@ -24,3 +24,13 @@ rapture -i="path/to/example.geojson" -p="POPULATION_2020" -w=1000 -h=600 -o="doc
 - Statistics
     - [X] Density (somewhat)
     - [ ] Custom Functions
+
+## Current Issues
+
+This section comprises issues I'm working to solve currently, and any additional braindumping:
+
+- Need a better parser for GeoJSON (and other vector data formats), including handling their properties better.
+- Introduce concurrency via goroutines + channels. (maybe for cell processing?)
+- Organize project more accurately -- it's currently a mess, though I anticipate this to resolve itself as the project matures.
+- How to incorporate better configuration, YAML/TOML/etc? (down the road)
+- Actually start write unit tests...

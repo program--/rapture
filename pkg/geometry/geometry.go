@@ -89,7 +89,8 @@ func Parse(path string) (*Collection, error) {
 	case ".geojsonl":
 		fallthrough
 	case ".geojsons":
-		return parseGeojsonSeq(path)
+		// return parseGeojsonSeq(path)
+		return nil, ErrUnsupportedFileType
 	case "":
 		return nil, ErrMissingFileExtension
 	default:
@@ -151,23 +152,28 @@ func parseGeojsonSeq(path string) (*Collection, error) {
 	cancel := make(chan struct{})
 	errc := make(chan error, 1)
 
-	for scanner.Scan() {
-		go func(line []byte, c chan struct{}) {
-			g, err := geojson.UnmarshalFeature(line)
-			if err != nil {
-				errc <- err
-				close(c)
-			}
+	var buffer []byte
 
+	for scanner.Scan() {
+		l := scanner.Bytes()
+		copy(buffer, l)
+		go func(line []byte, c chan struct{}) {
 			select {
 			case <-c:
 				return
 			default:
+				copy(line, l)
+				g, err := geojson.UnmarshalFeature(line)
+				if err != nil {
+					errc <- err
+					return
+				}
+
 				features <- g.Geometry
 				properties <- g.Properties
 				bounds <- g.BBox.Bound()
 			}
-		}(scanner.Bytes(), cancel)
+		}(buffer, cancel)
 	}
 
 	if err := <-errc; err != nil {

@@ -5,15 +5,16 @@ import (
 	"image/png"
 	"os"
 	"rapture/pkg/canvas"
+	"rapture/pkg/config"
 	"rapture/pkg/geometry"
 	"rapture/pkg/grid"
 
 	"github.com/tidwall/geojson"
 )
 
-func Run(path string, width int, height int, output string, property string) {
+func Run(cfg config.RaptureConfig) {
 	// Read File
-	s, err := os.ReadFile(path)
+	s, err := os.ReadFile(cfg.Path)
 	if err != nil {
 		panic(err)
 	}
@@ -27,11 +28,11 @@ func Run(path string, width int, height int, output string, property string) {
 
 	// Create Grid
 	fmt.Println("Creating grid...")
-	grd := grid.NewGridFromGeojson(g, width, height)
+	grd := grid.NewGridFromGeojson(g, cfg.Width, cfg.Height)
 
 	// Add Points
 	fmt.Println("Adding points...")
-	geometry.MapToGrid(g, property, grd)
+	geometry.MapToGrid(g, cfg.Prop, grd)
 	fmt.Printf("Added %d points\n", grd.Cells().Len())
 
 	fmt.Println("Condensing values")
@@ -41,7 +42,7 @@ func Run(path string, width int, height int, output string, property string) {
 	fmt.Println("Rendering")
 	img := cvs.Render()
 
-	f, err := os.Create(output)
+	f, err := os.Create(cfg.Output)
 	if err != nil {
 		panic(err)
 	}

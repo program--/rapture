@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"rapture/cli"
+	"rapture/pkg/config"
 	"runtime/pprof"
 )
 
@@ -15,45 +16,38 @@ Usage: rapture -i (input) -o (output) [options]
 
 `
 
-var path string
-var output string
-var stat string
-var prop string
-var width int
-var height int
-var bbox string
-var prof string
+var cfg = config.RaptureConfig{}
 
 func init() {
-	flag.StringVar(&path, "input", "", "input file")
-	flag.StringVar(&path, "i", "", "input file")
+	flag.StringVar(&cfg.Path, "input", "", "input file")
+	flag.StringVar(&cfg.Path, "i", "", "input file")
 
-	flag.StringVar(&output, "output", "", "output file path (.png)")
-	flag.StringVar(&output, "o", "", "output file path (.png)")
+	flag.StringVar(&cfg.Output, "output", "", "output file path (.png)")
+	flag.StringVar(&cfg.Output, "o", "", "output file path (.png)")
 
-	flag.IntVar(&width, "width", 800, "width of output")
-	flag.IntVar(&width, "w", 800, "width of output")
+	flag.IntVar(&cfg.Width, "width", 800, "width of output")
+	flag.IntVar(&cfg.Width, "w", 800, "width of output")
 
-	flag.IntVar(&height, "height", 800, "height of output")
-	flag.IntVar(&height, "h", 800, "height of output")
+	flag.IntVar(&cfg.Height, "height", 800, "height of output")
+	flag.IntVar(&cfg.Height, "h", 800, "height of output")
 
-	flag.StringVar(&prop, "property", "", "property to use from input")
-	flag.StringVar(&prop, "p", "", "property to use from input")
+	flag.StringVar(&cfg.Prop, "property", "", "property to use from input")
+	flag.StringVar(&cfg.Prop, "p", "", "property to use from input")
 
-	flag.StringVar(&stat, "stat", "density", "function for displaying values, can be one of: density, mean")
-	flag.StringVar(&stat, "s", "density", "function for displaying values, can be one of: density, mean")
+	flag.StringVar(&cfg.Stat, "stat", "density", "function for displaying values, can be one of: density, mean")
+	flag.StringVar(&cfg.Stat, "s", "density", "function for displaying values, can be one of: density, mean")
 
-	flag.StringVar(&bbox, "bbox", "", "string delimited bounding box in order: xmax,xmin,ymax,ymin")
-	flag.StringVar(&bbox, "b", "", "string delimited bounding box in order: xmax,xmin,ymax,ymin")
+	flag.StringVar(&cfg.Bbox, "bbox", "", "string delimited bounding box in order: xmax,xmin,ymax,ymin")
+	flag.StringVar(&cfg.Bbox, "b", "", "string delimited bounding box in order: xmax,xmin,ymax,ymin")
 
-	flag.StringVar(&prof, "prof", "", "write cpu profile to file")
+	flag.StringVar(&cfg.Prof, "prof", "", "write cpu profile to file")
 }
 
 func main() {
 	flag.Parse()
 
-	if prof != "" {
-		f, err := os.Create(prof)
+	if cfg.Prof != "" {
+		f, err := os.Create(cfg.Prof)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -61,10 +55,10 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	if path == "" || output == "" {
+	if cfg.Path == "" || cfg.Output == "" {
 		fmt.Print(usage)
 		os.Exit(1)
 	} else {
-		cli.Run(path, width, height, output, prop)
+		cli.Run(cfg)
 	}
 }

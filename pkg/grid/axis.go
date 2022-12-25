@@ -14,6 +14,7 @@ func (ax *Axis) Bounds() (float64, float64) {
 	return ax.from, ax.to
 }
 
+// Returns the dimension of the axis (a.k.a. its length)
 func (ax *Axis) Dim() int {
 	return ax.length
 }

@@ -3,14 +3,8 @@ package grid
 import (
 	"image"
 
-	"github.com/tidwall/geojson"
+	"github.com/paulmach/orb"
 )
-
-type GridCell struct {
-	Val any
-	Col int // a.k.a. x-coordinate
-	Row int // a.k.a. y-coordinate
-}
 
 type Grid struct {
 	cells *Cells
@@ -79,18 +73,17 @@ func NewGrid(xAxis *Axis, yAxis *Axis, points int) *Grid {
 }
 
 // Creates a new grid from a given geojson object.
-func NewGridFromGeojson(g geojson.Object, width int, height int) *Grid {
+func NewGridFromBound(b orb.Bound, width int, height int, n int) *Grid {
 	// Get extent
-	rect := g.Rect()
-	xmin := rect.Min.X
-	ymin := rect.Min.Y
-	xmax := rect.Max.X
-	ymax := rect.Max.Y
+	xmin := b.Min.X()
+	ymin := b.Min.Y()
+	xmax := b.Max.X()
+	ymax := b.Max.Y()
 
 	// Setup Axes
 	xax := NewAxis(xmin, xmax, width)
 	yax := NewAxis(ymin, ymax, height)
 
 	// Setup Grid
-	return NewGrid(xax, yax, g.NumPoints())
+	return NewGrid(xax, yax, n)
 }

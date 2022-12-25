@@ -1,4 +1,4 @@
-package canvas
+package colors
 
 import (
 	"image/color"
@@ -20,19 +20,23 @@ func NewColorRamp(from color.Color, to color.Color, steps int) *ColorRamp {
 	}
 }
 
+func (cr *ColorRamp) Steps() int {
+	return cr.steps
+}
+
 // Interpolate to step between from and to. from/to will be either the R, G, or B channels from start/end colors.
-func (this *ColorRamp) interpolate(from uint8, to uint8, step int) uint8 {
+func (cr *ColorRamp) interpolate(from uint8, to uint8, step int) uint8 {
 	var (
 		dis, pct float64
 		cst      uint8
 	)
 	if from < to {
 		dis = float64(to - from)
-		pct = float64(step) / float64(this.steps)
+		pct = float64(step) / float64(cr.steps)
 		cst = from
 	} else {
 		dis = float64(from - to)
-		pct = 1 - (float64(step) / float64(this.steps))
+		pct = 1 - (float64(step) / float64(cr.steps))
 		cst = to
 	}
 
@@ -40,26 +44,26 @@ func (this *ColorRamp) interpolate(from uint8, to uint8, step int) uint8 {
 }
 
 // Generated color from color ramp at given step. Returns *color.NRGBA{} object.
-func (this *ColorRamp) Generate(step int) color.Color {
+func (cr *ColorRamp) Generate(step int) color.Color {
 	if step == 0 {
-		return this.startColor
+		return cr.startColor
 	}
 
-	if step == this.steps {
-		return this.endColor
+	if step == cr.steps {
+		return cr.endColor
 	}
 
-	if step < 0 || step > this.steps {
+	if step < 0 || step > cr.steps {
 		return nil
 	}
 
-	s := this.startColor.(*color.NRGBA)
-	e := this.endColor.(*color.NRGBA)
+	s := cr.startColor.(*color.NRGBA)
+	e := cr.endColor.(*color.NRGBA)
 
 	return &color.NRGBA{
-		R: this.interpolate(s.R, e.R, step),
-		G: this.interpolate(s.G, e.G, step),
-		B: this.interpolate(s.B, e.B, step),
-		A: this.interpolate(s.A, e.A, step),
+		R: cr.interpolate(s.R, e.R, step),
+		G: cr.interpolate(s.G, e.G, step),
+		B: cr.interpolate(s.B, e.B, step),
+		A: cr.interpolate(s.A, e.A, step),
 	}
 }

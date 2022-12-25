@@ -1,4 +1,4 @@
-package canvas
+package colors
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 
 var errInvalidFormat = errors.New("invalid hex code format")
 
-func colorFromJson(s string) (color.Color, error) {
+func ColorFromJson(s string) (color.Color, error) {
 	c := &color.NRGBA{
 		R: 255,
 		G: 255,

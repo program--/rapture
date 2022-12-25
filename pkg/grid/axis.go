@@ -10,44 +10,44 @@ type Axis struct {
 }
 
 // Returns axis extent as min, max
-func (this *Axis) Bounds() (float64, float64) {
-	return this.from, this.to
+func (ax *Axis) Bounds() (float64, float64) {
+	return ax.from, ax.to
 }
 
-func (this *Axis) Dim() int {
-	return this.length
+func (ax *Axis) Dim() int {
+	return ax.length
 }
 
 // Index a degree value onto the axis. Returns -1 if the degree value is off the axis
-func (this *Axis) Index(degree float64, reverse bool) int {
-	idx := sort.SearchFloat64s(this.Seq(), degree)
-	if idx == this.length {
+func (ax *Axis) Index(degree float64, reverse bool) int {
+	idx := sort.SearchFloat64s(ax.Seq(), degree)
+	if idx == ax.length {
 		return -1
 	}
 
 	if reverse {
-		return this.length - idx
+		return ax.length - idx
 	} else {
 		return idx
 	}
 }
 
 // Returns the Axis as a sequence of equally spaced degree values
-func (this *Axis) Seq() []float64 {
+func (ax *Axis) Seq() []float64 {
 	var vec []float64
 
-	if this.cache == nil {
-		diff := (this.to - this.from) / float64(this.length-1)
-		vec = make([]float64, 0, this.length)
+	if ax.cache == nil {
+		diff := (ax.to - ax.from) / float64(ax.length-1)
+		vec = make([]float64, 0, ax.length)
 
-		for i := 0; i < this.length; i++ {
-			vec = append(vec, this.from+(diff*float64(i)))
+		for i := 0; i < ax.length; i++ {
+			vec = append(vec, ax.from+(diff*float64(i)))
 		}
 
-		this.cache = &vec
+		ax.cache = &vec
 	}
 
-	return *this.cache
+	return *ax.cache
 }
 
 func NewAxis(from float64, to float64, length int) *Axis {

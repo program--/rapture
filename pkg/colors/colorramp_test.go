@@ -1,23 +1,23 @@
-package canvas_test
+package colors_test
 
 import (
 	"image/color"
-	"rapture/pkg/canvas"
+	"rapture/pkg/colors"
 	"testing"
 )
 
 func TestColorRamp(t *testing.T) {
-	start, err := canvas.ColorFromHex("#000D73")
+	start, err := colors.ColorFromHex("#000D73")
 	if err != nil {
 		t.Fatal("Failed to create start color\n")
 	}
 
-	end, err := canvas.ColorFromHex("#032823")
+	end, err := colors.ColorFromHex("#032823")
 	if err != nil {
 		t.Fatal("Failed to create end color\n")
 	}
 
-	cr := canvas.NewColorRamp(start, end, 8)
+	cr := colors.NewColorRamp(start, end, 8)
 	expected := []string{
 		"#000D73",
 		"#001069",
@@ -31,7 +31,7 @@ func TestColorRamp(t *testing.T) {
 	}
 
 	for i := 0; i < 9; i++ {
-		expect, err := canvas.ColorFromHex(expected[i])
+		expect, err := colors.ColorFromHex(expected[i])
 		if err != nil {
 			t.Fatalf("Failed to create %d expected color\n", i)
 		}

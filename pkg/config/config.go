@@ -26,7 +26,7 @@ func (c *RaptureConfig) Init() {
 	for i := 0; i < nfields; i++ {
 		field := valref.Field(i)
 		tags := typeref.Field(i).Tag
-		ptr := field.UnsafePointer()
+		ptr := field.Addr().UnsafePointer()
 
 		flag_name := tags.Get("flag")
 		flag_alias := tags.Get("alias")

@@ -1,16 +1,14 @@
 package geometry
 
 import (
-	"bufio"
 	"bytes"
 	"errors"
-	"io"
-	"math"
 	"os"
 	"path/filepath"
 	"rapture/pkg/grid"
 	"sync"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geojson"
 )
@@ -21,31 +19,27 @@ var ErrUnsupportedFileType = errors.New("unsupported file type")
 var ErrMissingFileExtension = errors.New("missing file extension")
 var ErrNotImplemented = errors.New("not implemented")
 
+var c = jsoniter.Config{
+	EscapeHTML:              true,
+	SortMapKeys:             false,
+	MarshalFloatWith6Digits: true,
+}.Froze()
+
+func init() {
+	geojson.CustomJSONMarshaler = c
+	geojson.CustomJSONUnmarshaler = c
+}
+
+type Feature struct {
+	Geometry   orb.Geometry
+	Properties geojson.Properties
+}
+
 type Collection struct {
-	Features    chan orb.Geometry
-	Properties  chan geojson.Properties
+	Features    chan Feature
 	NumFeatures int
 	Extent      orb.Bound
 }
-
-// func MapToGrid(g geojson.Object, p string, grd *grid.Grid) {
-// 	var v float64
-// 	reuse := new(map[string]interface{})
-// 	g.ForEach(func(geom geojson.Object) bool {
-// 		pt := geom.Center()
-// 		js := geom.(*geojson.Feature).JSON()
-// 		json.Unmarshal([]byte(js), reuse)
-//
-// 		if value, ok := (*reuse)["properties"].(map[string]interface{})[p]; ok {
-// 			v = value.(float64)
-// 		} else {
-// 			v = math.Inf(-1)
-// 		}
-//
-// 		grd.AddCell(pt.X, pt.Y, v)
-// 		return true
-// 	})
-// }
 
 func MapToGrid(c *Collection, prop string, grd *grid.Grid) (int, error) {
 	wg := &sync.WaitGroup{}
@@ -54,14 +48,13 @@ func MapToGrid(c *Collection, prop string, grd *grid.Grid) (int, error) {
 		go func() {
 			defer wg.Done()
 			f := <-c.Features
-			p := <-c.Properties
-			v := p.MustFloat64(prop, 0)
+			v := f.Properties.MustFloat64(prop, 0)
 
-			switch f.GeoJSONType() {
+			switch f.Geometry.GeoJSONType() {
 			case geojson.TypePoint:
-				grd.AddCell(f.(orb.Point).Lon(), f.(orb.Point).Lat(), v)
+				grd.AddCell(f.Geometry.(orb.Point).Lon(), f.Geometry.(orb.Point).Lat(), v)
 			case geojson.TypeLineString:
-				l := f.(orb.LineString)
+				l := f.Geometry.(orb.LineString)
 				for i := 0; i < len(l)-1; i++ {
 					a := l[i]
 					b := l[i+1]
@@ -89,8 +82,7 @@ func Parse(path string) (*Collection, error) {
 	case ".geojsonl":
 		fallthrough
 	case ".geojsons":
-		// return parseGeojsonSeq(path)
-		return nil, ErrUnsupportedFileType
+		return parseGeojsonSeq(path)
 	case "":
 		return nil, ErrMissingFileExtension
 	default:
@@ -114,134 +106,49 @@ func parseGeojson(path string) (*Collection, error) {
 	}
 
 	nfeatures := len(g.Features)
-	features := make(chan orb.Geometry, nfeatures)
-	properties := make(chan geojson.Properties, nfeatures)
+	features := make(chan Feature, nfeatures)
 	for _, v := range g.Features {
 		go func(geom orb.Geometry, props geojson.Properties) {
-			features <- geom
-			properties <- props
+			features <- Feature{
+				Geometry:   geom,
+				Properties: props,
+			}
 		}(v.Geometry, v.Properties)
 	}
 
 	return &Collection{
 		Features:    features,
-		Properties:  properties,
 		NumFeatures: nfeatures,
 		Extent:      g.BBox.Bound(),
 	}, nil
 }
 
 func parseGeojsonSeq(path string) (*Collection, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	nfeatures, err := countLines(f)
+	d, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	f.Seek(0, 0) // return to beginning of file
+	lines := bytes.Split(d, []byte("\n"))
+	features := make(chan Feature, len(lines))
+	nfeatures := 0
 
-	scanner := bufio.NewScanner(f)
-	features := make(chan orb.Geometry, nfeatures)
-	properties := make(chan geojson.Properties, nfeatures)
-	bounds := make(chan orb.Bound, nfeatures)
-	cancel := make(chan struct{})
-	errc := make(chan error, 1)
-
-	var buffer []byte
-
-	for scanner.Scan() {
-		l := scanner.Bytes()
-		copy(buffer, l)
-		go func(line []byte, c chan struct{}) {
-			select {
-			case <-c:
-				return
-			default:
-				copy(line, l)
-				g, err := geojson.UnmarshalFeature(line)
-				if err != nil {
-					errc <- err
-					return
+	for _, line := range lines {
+		if len(line) != 0 {
+			go func(l []byte) {
+				// UNSAFE
+				g, _ := geojson.UnmarshalFeature(l)
+				features <- Feature{
+					Geometry:   g.Geometry,
+					Properties: g.Properties,
 				}
-
-				features <- g.Geometry
-				properties <- g.Properties
-				bounds <- g.BBox.Bound()
-			}
-		}(buffer, cancel)
-	}
-
-	if err := <-errc; err != nil {
-		return nil, err
-	}
-
-	count, xmax, xmin, ymax, ymin := 0, math.Inf(-1), math.Inf(1), math.Inf(-1), math.Inf(1)
-	for b := range bounds {
-		if count == nfeatures {
-			close(bounds)
-			break
+			}(line)
+			nfeatures++
 		}
-
-		if b.Max.X() > xmax {
-			xmax = b.Max.X()
-		}
-
-		if b.Min.X() < xmin {
-			xmin = b.Min.X()
-		}
-
-		if b.Max.Y() > ymax {
-			ymax = b.Max.Y()
-		}
-
-		if b.Min.Y() < ymin {
-			ymin = b.Min.Y()
-		}
-
-		count++
 	}
 
 	return &Collection{
 		Features:    features,
-		Properties:  properties,
 		NumFeatures: nfeatures,
-		Extent: orb.Bound{
-			Min: orb.Point{xmin, ymin},
-			Max: orb.Point{xmax, ymax},
-		},
 	}, nil
-}
-
-func countLines(r io.Reader) (int, error) {
-	var count int
-	const lineBreak = '\n'
-
-	buf := make([]byte, bufio.MaxScanTokenSize)
-
-	for {
-		bufferSize, err := r.Read(buf)
-		if err != nil && err != io.EOF {
-			return 0, err
-		}
-
-		var buffPosition int
-		for {
-			i := bytes.IndexByte(buf[buffPosition:], lineBreak)
-			if i == -1 || bufferSize == buffPosition {
-				break
-			}
-			buffPosition += i + 1
-			count++
-		}
-		if err == io.EOF {
-			break
-		}
-	}
-
-	return count, nil
 }

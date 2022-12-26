@@ -7,11 +7,11 @@ import (
 
 func TestParsing(t *testing.T) {
 	geojson_path := "../../test/data/example.geojson"
-	// geojsons_path := "../../test/data/example.geojsonl"
+	geojsons_path := "../../test/data/example.geojsonl"
 	// fgb_path := "test/data/example.fgb"
 
 	testPath(geojson_path, t)
-	// testPath(geojsons_path, t)
+	testPath(geojsons_path, t)
 }
 
 func testPath(path string, t *testing.T) {
@@ -21,6 +21,6 @@ func testPath(path string, t *testing.T) {
 	}
 
 	if c.NumFeatures != 100 {
-		t.Error("NumFeatures is not 100")
+		t.Errorf("NumFeatures is not 100, received: %d", c.NumFeatures)
 	}
 }

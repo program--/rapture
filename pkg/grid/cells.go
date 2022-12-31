@@ -2,149 +2,133 @@ package grid
 
 import (
 	"math"
-	"reflect"
+	"sync"
+	"sync/atomic"
 )
 
-type Cell struct {
-	Val any
-	Col int
-	Row int
+type Cell[T cell_t] struct {
+	value  T
+	column uint
+	row    uint
 }
 
-type Cells struct {
-	Vals []any
-	Cols []int // x
-	Rows []int // y
+type CellSummary[T cell_t] struct {
+	Max T
+	Min T
+	Avg T
 }
 
-type GridSummary struct {
-	MaxVal float64
-	MinVal float64
-	AvgVal float64
+type CellArray[T cell_t] struct {
+	mu      sync.Mutex
+	cells   []Cell[T]
+	summary *CellSummary[T]
 }
 
-func NewCells(size int) *Cells {
-	cells := new(Cells)
+func NewCellArray[T cell_t](size uint) *CellArray[T] {
+	cells := new(CellArray[T])
 	cells.Allocate(size)
 	return cells
 }
 
-// Allocate size to cells arrays. If cells is already used,
-// then initial values are copied to newly allocated arrays.
-func (c *Cells) Allocate(size int) {
-	tot_cap := c.Cap() + size
-	l := c.Len()
-	vals := make([]any, l, tot_cap)
-	cols := make([]int, l, tot_cap)
-	rows := make([]int, l, tot_cap)
-
-	if l > 0 {
-		copy(vals, c.Vals)
-		copy(cols, c.Cols)
-		copy(rows, c.Rows)
-	}
-
-	c.Vals = vals
-	c.Cols = cols
-	c.Rows = rows
-}
-
-// Add cell with given col, row, and value
-func (c *Cells) AddCell(col int, row int, val any) {
-	iter := c.Len()
-	if iter >= c.Cap() {
-		// Double array allocation
-		c.Allocate(c.Cap())
-	}
-
-	c.Vals = append(c.Vals, val)
-	c.Cols = append(c.Cols, col)
-	c.Rows = append(c.Rows, row)
-}
-
-// applies a function across all allocated cells
-func (c *Cells) Condense(f func(any, any, any) any, opts any) *GridSummary {
-	index := make(map[int64]any)
-	for i := 0; i < c.Len(); i++ {
-		key := elepair(c.Cols[i], c.Rows[i])
-		if _, ok := index[key]; ok {
-			index[key] = f(index[key], c.Vals[i], opts)
-		} else {
-			index[key] = f(0.0, c.Vals[i], opts)
-		}
-	}
-
-	summary := &GridSummary{
-		MaxVal: math.Inf(-1),
-		MinVal: math.Inf(1),
-		AvgVal: 0.0,
-	}
-
-	new_len := len(index)
-	if new_len != c.Len() {
-		c.Cols = make([]int, 0, new_len)
-		c.Rows = make([]int, 0, new_len)
-		c.Vals = make([]any, 0, new_len)
-
-		for k, v := range index {
-			col, row := eleunpair(k)
-			c.Cols = append(c.Cols, col)
-			c.Rows = append(c.Rows, row)
-			c.Vals = append(c.Vals, v)
-
-			rv := reflect.ValueOf(v).Float()
-			if rv < summary.MinVal {
-				summary.MinVal = rv
-			}
-
-			if rv > summary.MaxVal {
-				summary.MaxVal = rv
-			}
-
-			summary.AvgVal += rv
-		}
-
-		summary.AvgVal /= float64(new_len)
-	}
-
-	return summary
+// returns allocation size of cells
+func (c *CellArray[T]) Cap() uint {
+	return uint(cap(c.cells))
 }
 
 // returns number of cells
-func (c *Cells) Len() int {
-	return len(c.Cols)
+func (c *CellArray[T]) Len() uint {
+	return uint(len(c.cells))
 }
 
-// returns allocation size of cells
-func (c *Cells) Cap() int {
-	return cap(c.Cols)
+// returns a cell at a given index
+func (c *CellArray[T]) At(index int) *Cell[T] {
+	return &c.cells[index]
 }
 
-// returns cell at input index
-func (c *Cells) At(index int) *Cell {
-	return &Cell{
-		Val: c.Vals[index],
-		Col: c.Cols[index],
-		Row: c.Rows[index],
+// Allocate size to cells arrays. If cells is already used,
+// then initial values are copied to newly allocated arrays.
+func (c *CellArray[T]) Allocate(size uint) {
+	totalCapacity := c.Cap() + size
+	currentLength := c.Len()
+	newCellsArray := make([]Cell[T], currentLength, totalCapacity)
+	if currentLength > 0 {
+		copy(newCellsArray, c.cells)
 	}
+
+	c.cells = newCellsArray
 }
 
-func elepair(x int, y int) int64 {
-	if x < y {
-		return int64(math.Pow(float64(y), 2.0) + float64(x))
-	} else {
-		return int64(math.Pow(float64(x), 2.0) + float64(x) + float64(y))
+// Add cell with given col, row, and value
+func (c *CellArray[T]) Add(column uint, row uint, value T) {
+	if c.Len() >= c.Cap() {
+		c.Allocate(c.Cap()) // Double allocation
 	}
+
+	c.mu.Lock() // mapping is done in a goroutine
+	c.cells = append(c.cells, Cell[T]{value, column, row})
+	c.mu.Unlock()
 }
 
-func eleunpair(z int64) (int, int) {
-	sqfl := math.Floor(math.Sqrt(float64(z)))
-	sqflsq := math.Pow(sqfl, 2.0)
-	zf := float64(z)
-
-	if zf-sqflsq < sqfl {
-		return int(zf - sqflsq), int(sqfl)
-	} else {
-		return int(sqfl), int(zf - sqflsq - sqfl)
+// Applies some operation defined in reducer across all hashed points
+func (c *CellArray[T]) Condense(hasher Hasher, reducer Coalescer[T]) {
+	wg := sync.WaitGroup{}
+	newLen := uint64(0)
+	cellMap := sync.Map{}
+	cellMapReduce := func(k uint64, v T) {
+		defer wg.Done()
+		if value, ok := cellMap.Load(k); ok {
+			cellMap.Store(k, reducer.Coaelesce(value.(T), v))
+		} else {
+			cellMap.Store(k, reducer.Coaelesce(T(0), v))
+			atomic.AddUint64(&newLen, 1)
+		}
 	}
+
+	// Perform condensing
+	wg.Add(int(c.Len()))
+	for _, cell := range c.cells {
+		key := hasher.Hash(cell.column, cell.row)
+		go cellMapReduce(key, cell.value)
+	}
+	wg.Wait()
+
+	// Rematerialize cells into new array with length <= original array
+	newCells := make([]Cell[T], 0, newLen)
+	cellMap.Range(func(k any, value any) bool {
+		column, row := hasher.Unhash(k.(uint64))
+		newCells = append(newCells, Cell[T]{value.(T), column, row})
+		return true
+	})
+}
+
+// TODO
+func (c *CellArray[T]) Summarise() *CellSummary[T] {
+	if c.summary == nil {
+		switch any(c.cells[0].value).(type) {
+		case string:
+			panic("summaries for strings is not implemented")
+		}
+
+		max := T(math.Inf(-1))
+		min := T(math.Inf(1))
+		avg := T(0)
+
+		for _, cell := range c.cells {
+			if cell.value > max {
+				max = cell.value
+			}
+
+			if cell.value < min {
+				min = cell.value
+			}
+
+			avg += cell.value
+		}
+
+		avg = avg / T(len(c.cells))
+
+		c.summary = &CellSummary[T]{max, min, avg}
+	}
+
+	return c.summary
 }

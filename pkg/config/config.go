@@ -11,8 +11,8 @@ type RaptureConfig struct {
 	Output string `flag:"output" usage:"output file path (.png)" alias:"o"`
 	Stat   string `flag:"stat" usage:"function for displaying values, can be of one: density, mean" default:"density" alias:"s"`
 	Prop   string `flag:"property" usage:"property to use from input" alias:"p"`
-	Width  int    `flag:"width" usage:"width of output" default:"800" alias:"w"`
-	Height int    `flag:"height" usage:"height of output" default:"800" alias:"h"`
+	Width  uint   `flag:"width" usage:"width of output" default:"800" alias:"w"`
+	Height uint   `flag:"height" usage:"height of output" default:"800" alias:"h"`
 	Bbox   string `flag:"bbox" usage:"string delimited bounding box in order: xmax, xmin, ymax, ymin" alias:"b"`
 	Prof   string `flag:"prof" usage:"write cpu profile to file"`
 }
@@ -40,12 +40,12 @@ func (c *RaptureConfig) Init() {
 				flag.StringVar((*string)(ptr), flag_alias, flag_default, flag_usage)
 			}
 			continue
-		case reflect.Int:
-			flag_default_int64, _ := strconv.ParseInt(flag_default, 10, 32)
-			flag_default_int := int(flag_default_int64)
-			flag.IntVar((*int)(ptr), flag_name, flag_default_int, flag_usage)
+		case reflect.Uint:
+			flag_default_uint64, _ := strconv.ParseUint(flag_default, 10, 64)
+			flag_default_uint := uint(flag_default_uint64)
+			flag.UintVar((*uint)(ptr), flag_name, flag_default_uint, flag_usage)
 			if flag_alias != "" {
-				flag.IntVar((*int)(ptr), flag_alias, flag_default_int, flag_usage)
+				flag.UintVar((*uint)(ptr), flag_alias, flag_default_uint, flag_usage)
 			}
 			continue
 		}

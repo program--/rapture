@@ -2,9 +2,6 @@ package cli
 
 import (
 	"fmt"
-	"image/png"
-	"os"
-	"rapture/pkg/canvas"
 	"rapture/pkg/config"
 	"rapture/pkg/geometry"
 	"rapture/pkg/grid"
@@ -12,38 +9,26 @@ import (
 
 func Run(cfg config.RaptureConfig) {
 	// Parse file
-	features, err := geometry.Parse(cfg.Path)
+	fmt.Println("Parsing")
+	features, err := geometry.NewFeatureCollection(cfg.Path)
 	if err != nil {
 		panic(err)
 	}
 
 	// Create grid
-	grd := grid.NewGridFromBound(
-		features.Extent,
-		cfg.Width,
-		cfg.Height,
-		features.NumFeatures,
-	)
+	fmt.Println("Creating grid...")
+	grd := grid.NewGridFromBound[float64](features.Extent, cfg.Width, cfg.Height, uint(len(features.Features)))
 
 	// Add Points
 	fmt.Println("Adding points...")
-	geometry.MapToGrid(features, cfg.Prop, grd)
-	fmt.Printf("Added %d points\n", grd.Cells().Len())
-
-	fmt.Println("Condensing values")
-	summary := grd.Cells().Condense(canvas.Density, nil)
-
-	cvs := canvas.NewCanvas(grd, summary)
-	fmt.Println("Rendering")
-	img := cvs.Render()
-
-	f, err := os.Create(cfg.Output)
+	n, err := grd.MapFeatures(features, "POPULATION_2020")
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("Added %d points\n", n)
 
-	err = png.Encode(f, img)
-	if err != nil {
-		panic(err)
-	}
+	// fmt.Println("Condensing values")
+	// summary := grd.Cells().Condense(canvas.Density, nil)
+
+	grd.Render(cfg.Output)
 }

@@ -129,7 +129,7 @@ func (c *CellArray[T]) Summarise() *CellSummary[T] {
 		avg = avg / T(len(c.cells))
 
 		c.summary = &CellSummary[T]{max, min, avg}
-		fmt.Printf("Created grid summary: {Max: %v, Min: %v, Avg: %v}", c.summary.Max, c.summary.Min, c.summary.Avg)
+		fmt.Printf("Created grid summary: {Max: %v, Min: %v, Avg: %v}\n", c.summary.Max, c.summary.Min, c.summary.Avg)
 	}
 
 	return c.summary

@@ -19,9 +19,9 @@ func Run(cfg config.RaptureConfig) {
 
 	fmt.Printf("Creating grid with %d features...\n", nfeatures)
 	grid.
-		NewGridFromBound[float64](features.Extent, cfg.Width+cfg.Padding, cfg.Height+cfg.Padding, nfeatures).
+		NewGridFromBound[float64](features.Extent, cfg.Width, cfg.Height, nfeatures).
 		WithCoalescer(grid.Accumulator[float64]{}).
 		WithFeatures(features, cfg.Prop).
 		Summarise().
-		Render(cfg.Output)
+		Render(cfg.Output, cfg.Padding)
 }

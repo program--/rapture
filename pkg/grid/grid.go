@@ -7,19 +7,49 @@ import (
 )
 
 type Grid[T cell_t] struct {
-	cells *CellArray[T]
-	xAxis *Axis[float64]
-	yAxis *Axis[float64]
+	cells  *CellArray[T]
+	xAxis  *Axis[float64]
+	yAxis  *Axis[float64]
+	cAxis  *Axis[T]
+	clsc   Coalescer[T]
+	hasher Hasher
 }
 
 func NewGrid[T cell_t](xAxis *Axis[float64], yAxis *Axis[float64], points uint) *Grid[T] {
-	return &Grid[T]{NewCellArray[T](points), xAxis, yAxis}
+	grd := &Grid[T]{NewCellArray[T](points), xAxis, yAxis, nil, nil, nil}
+	h := &SimpleHasher{}
+	return grd.WithHasher(h)
 }
 
 func NewGridFromBound[T cell_t](b *orb.Bound, width uint, height uint, n uint) *Grid[T] {
 	xax := NewAxis(b.Min.X(), b.Max.X(), width)
 	yax := NewAxis(b.Min.Y(), b.Max.Y(), height)
 	return NewGrid[T](xax, yax, n)
+}
+
+func (grd *Grid[T]) WithCoalescer(clsc Coalescer[T]) *Grid[T] {
+	grd.clsc = clsc
+	return grd
+}
+
+func (grd *Grid[T]) WithHasher(hasher Hasher) *Grid[T] {
+	grd.hasher = hasher
+	return grd
+}
+
+func (grd *Grid[T]) Condense() *Grid[T] {
+	grd.cells.Condense(grd.hasher, grd.clsc)
+	return grd
+}
+
+func (grd *Grid[T]) Summarise() *Grid[T] {
+	grd.cells.Summarise()
+	grd.cAxis = NewAxis(
+		grd.cells.summary.Min,
+		grd.cells.summary.Max,
+		10,
+	)
+	return grd
 }
 
 func (grd *Grid[T]) Bounds() *orb.Bound {
@@ -29,6 +59,10 @@ func (grd *Grid[T]) Bounds() *orb.Bound {
 		Max: orb.Point{xmax, ymax},
 		Min: orb.Point{xmin, ymin},
 	}
+}
+
+func (grd *Grid[T]) ColorAxis() *Axis[T] {
+	return grd.cAxis
 }
 
 func (grd *Grid[T]) Width() uint {

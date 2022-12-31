@@ -1,6 +1,7 @@
 package grid
 
 import (
+	"fmt"
 	"math"
 	"sync"
 	"sync/atomic"
@@ -74,12 +75,12 @@ func (c *CellArray[T]) Condense(hasher Hasher, reducer Coalescer[T]) {
 	wg := sync.WaitGroup{}
 	newLen := uint64(0)
 	cellMap := sync.Map{}
-	cellMapReduce := func(k uint64, v T) {
+	cellMapReduce := func(k uint64, v T, r Coalescer[T]) {
 		defer wg.Done()
 		if value, ok := cellMap.Load(k); ok {
-			cellMap.Store(k, reducer.Coaelesce(value.(T), v))
+			cellMap.Store(k, r.Coalesce(value.(T), v))
 		} else {
-			cellMap.Store(k, reducer.Coaelesce(T(0), v))
+			cellMap.Store(k, r.Coalesce(T(0), v))
 			atomic.AddUint64(&newLen, 1)
 		}
 	}
@@ -88,20 +89,20 @@ func (c *CellArray[T]) Condense(hasher Hasher, reducer Coalescer[T]) {
 	wg.Add(int(c.Len()))
 	for _, cell := range c.cells {
 		key := hasher.Hash(cell.column, cell.row)
-		go cellMapReduce(key, cell.value)
+		go cellMapReduce(key, cell.value, reducer)
 	}
 	wg.Wait()
 
 	// Rematerialize cells into new array with length <= original array
 	newCells := make([]Cell[T], 0, newLen)
-	cellMap.Range(func(k any, value any) bool {
-		column, row := hasher.Unhash(k.(uint64))
-		newCells = append(newCells, Cell[T]{value.(T), column, row})
+	cellMap.Range(func(key any, value any) bool {
+		column, row := hasher.Unhash(key.(uint64))
+		cell := Cell[T]{value.(T), column, row}
+		newCells = append(newCells, cell)
 		return true
 	})
 }
 
-// TODO
 func (c *CellArray[T]) Summarise() *CellSummary[T] {
 	if c.summary == nil {
 		switch any(c.cells[0].value).(type) {
@@ -128,6 +129,7 @@ func (c *CellArray[T]) Summarise() *CellSummary[T] {
 		avg = avg / T(len(c.cells))
 
 		c.summary = &CellSummary[T]{max, min, avg}
+		fmt.Printf("Created grid summary: {Max: %v, Min: %v, Avg: %v}", c.summary.Max, c.summary.Min, c.summary.Avg)
 	}
 
 	return c.summary

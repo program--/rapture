@@ -3,14 +3,12 @@ package grid
 import (
 	"rapture/pkg/geometry"
 	"sync"
-	"sync/atomic"
 
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/geojson"
 )
 
-func (grd *Grid[T]) MapFeatures(f *geometry.FeatureCollection, property string) (uint64, error) {
-	mapped := uint64(0)
+func (grd *Grid[T]) WithFeatures(f *geometry.FeatureCollection, property string) *Grid[T] {
 	wg := &sync.WaitGroup{}
 	mapToGrid := func(feature *geometry.Feature) {
 		defer wg.Done()
@@ -20,7 +18,6 @@ func (grd *Grid[T]) MapFeatures(f *geometry.FeatureCollection, property string) 
 		case geojson.TypePoint:
 			pt := (*feature.Geometry).(orb.Point)
 			grd.AddPoint(&pt, value)
-			atomic.AddUint64(&mapped, 1)
 		case geojson.TypeLineString:
 			panic("not implemented")
 		default:
@@ -28,13 +25,14 @@ func (grd *Grid[T]) MapFeatures(f *geometry.FeatureCollection, property string) 
 		}
 	}
 
+	// process
 	for _, v := range f.Features {
 		wg.Add(1)
 		go mapToGrid(v)
 	}
-
 	wg.Wait()
-	return mapped, nil
+
+	return grd
 }
 
 func getProp[T cell_t](p *geojson.Properties, key string) (property T) {

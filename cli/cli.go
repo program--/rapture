@@ -15,20 +15,13 @@ func Run(cfg config.RaptureConfig) {
 		panic(err)
 	}
 
-	// Create grid
-	fmt.Println("Creating grid...")
-	grd := grid.NewGridFromBound[float64](features.Extent, cfg.Width, cfg.Height, uint(len(features.Features)))
+	nfeatures := uint(len(features.Features))
 
-	// Add Points
-	fmt.Println("Adding points...")
-	n, err := grd.MapFeatures(features, "POPULATION_2020")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("Added %d points\n", n)
-
-	// fmt.Println("Condensing values")
-	// summary := grd.Cells().Condense(canvas.Density, nil)
-
-	grd.Render(cfg.Output)
+	fmt.Printf("Creating grid with %d features...\n", nfeatures)
+	grid.
+		NewGridFromBound[float64](features.Extent, cfg.Width+cfg.Padding, cfg.Height+cfg.Padding, nfeatures).
+		WithCoalescer(grid.Accumulator[float64]{}).
+		WithFeatures(features, cfg.Prop).
+		Summarise().
+		Render(cfg.Output)
 }

@@ -23,7 +23,7 @@ type FeatureCollection struct {
 	Extent   *orb.Bound
 }
 
-func NewFeatureCollection(path string) (*FeatureCollection, error) {
+func NewFeatureCollection(path string, filter *orb.Bound) (*FeatureCollection, error) {
 	ext := filepath.Ext(path)
 	d, err := os.ReadFile(path)
 	if err != nil {
@@ -32,13 +32,13 @@ func NewFeatureCollection(path string) (*FeatureCollection, error) {
 
 	switch ext {
 	case ".fgb":
-		return parseFlatgeobuf(d)
+		return parseFlatgeobuf(d, filter)
 	case ".geojson":
-		return parseGeoJSON(d)
+		return parseGeoJSON(d, filter)
 	case ".geojsonl":
 		fallthrough
 	case ".geojsons":
-		return parseGeoJSONSeq(d)
+		return parseGeoJSONSeq(d, filter)
 	case "":
 		return nil, ErrMissingFileExtension
 	default:

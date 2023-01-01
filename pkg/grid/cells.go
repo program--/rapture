@@ -79,8 +79,10 @@ func (c *CellArray[T]) Condense(hasher util.Hasher, reducer util.Coalescer[T]) {
 	cellMapReduce := func(k uint64, v T, r util.Coalescer[T]) {
 		defer wg.Done()
 		if value, ok := cellMap.Load(k); ok {
+			// Cell has multiple geometry within it
 			cellMap.Store(k, r.Coalesce(value.(T), v))
 		} else {
+			// Cell doesn't have any previous geometry
 			cellMap.Store(k, r.Coalesce(T(0), v))
 			atomic.AddUint64(&newLen, 1)
 		}

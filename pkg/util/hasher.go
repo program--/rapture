@@ -7,6 +7,8 @@ type Hasher interface {
 	Unhash(uint64) (uint, uint)
 }
 
+// Implements a simple hasher to get a unique value for each pairing of XY values.
+// Space filling curves could be used as well, though I'm not sure there's any benefit.
 type SimpleHasher struct{}
 
 func (SimpleHasher) Hash(x uint, y uint) uint64 {

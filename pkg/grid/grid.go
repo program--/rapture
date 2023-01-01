@@ -2,8 +2,10 @@ package grid
 
 import (
 	"image"
+	"image/color"
 	"rapture/pkg/util"
 
+	"github.com/mazznoer/colorgrad"
 	"github.com/paulmach/orb"
 )
 
@@ -14,10 +16,11 @@ type Grid[T util.Cell_t] struct {
 	cAxis  *Axis[T]
 	clsc   util.Coalescer[T]
 	hasher util.Hasher
+	opts   *GridOptions
 }
 
-func NewGrid[T util.Cell_t](xAxis *Axis[float64], yAxis *Axis[float64], points uint) *Grid[T] {
-	grd := &Grid[T]{NewCellArray[T](points), xAxis, yAxis, nil, nil, nil}
+func NewGrid[T util.Cell_t](xAxis *Axis[float64], yAxis *Axis[float64], points uint, opts *GridOptions) *Grid[T] {
+	grd := &Grid[T]{NewCellArray[T](points), xAxis, yAxis, nil, nil, nil, opts}
 	h := &util.SimpleHasher{}
 	return grd.WithHasher(h)
 }
@@ -25,7 +28,17 @@ func NewGrid[T util.Cell_t](xAxis *Axis[float64], yAxis *Axis[float64], points u
 func NewGridFromBound[T util.Cell_t](b *orb.Bound, width uint, height uint, n uint) *Grid[T] {
 	xax := NewAxis(b.Min.X(), b.Max.X(), width)
 	yax := NewAxis(b.Min.Y(), b.Max.Y(), height)
-	return NewGrid[T](xax, yax, n)
+
+	default_palette := colorgrad.OrRd()
+	default_bg := color.Black
+	default_bins := uint(10)
+	opts := &GridOptions{
+		Palette:         &default_palette,
+		BackgroundColor: &default_bg,
+		Bins:            &default_bins,
+	}
+
+	return NewGrid[T](xax, yax, n, opts)
 }
 
 func (grd *Grid[T]) WithCoalescer(clsc util.Coalescer[T]) *Grid[T] {
@@ -38,6 +51,11 @@ func (grd *Grid[T]) WithHasher(hasher util.Hasher) *Grid[T] {
 	return grd
 }
 
+func (grd *Grid[T]) WithOptions(opts *GridOptions) *Grid[T] {
+	grd.opts = opts
+	return grd
+}
+
 func (grd *Grid[T]) Condense() *Grid[T] {
 	grd.cells.Condense(grd.hasher, grd.clsc)
 	return grd
@@ -45,10 +63,11 @@ func (grd *Grid[T]) Condense() *Grid[T] {
 
 func (grd *Grid[T]) Summarise() *Grid[T] {
 	grd.cells.Summarise()
+
 	grd.cAxis = NewAxis(
 		grd.cells.summary.Min,
 		grd.cells.summary.Max,
-		10,
+		*grd.opts.Bins,
 	)
 	return grd
 }

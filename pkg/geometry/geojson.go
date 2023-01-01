@@ -22,7 +22,7 @@ func init() {
 	geojson.CustomJSONUnmarshaler = c
 }
 
-func parseGeoJSON(data []byte) (*FeatureCollection, error) {
+func parseGeoJSON(data []byte, filter *orb.Bound) (*FeatureCollection, error) {
 	g, err := geojson.UnmarshalFeatureCollection(data)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func parseGeoJSON(data []byte) (*FeatureCollection, error) {
 	return &FeatureCollection{features, &extent}, nil
 }
 
-func parseGeoJSONSeq(data []byte) (*FeatureCollection, error) {
+func parseGeoJSONSeq(data []byte, filter *orb.Bound) (*FeatureCollection, error) {
 	lines := bytes.Split(data, []byte("\n"))
 	numLines := len(lines)
 	features := make([]*Feature, numLines)

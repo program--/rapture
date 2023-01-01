@@ -4,16 +4,21 @@ import (
 	"fmt"
 
 	"github.com/fogleman/gg"
-	"github.com/mazznoer/colorgrad"
 )
 
 func (grd *Grid[T]) Render(output string, padding uint) {
-	ctx := gg.NewContext(int(grd.Width())+2*int(padding), int(grd.Height())+2*int(padding))
-	// ctx.SetColor(color.Black)
-	// ctx.Clear()
+	var nc uint
 
-	nc := grd.cAxis.Dim()
-	pal := colorgrad.OrRd().ColorfulColors(nc)
+	ctx := gg.NewContext(int(grd.Width())+2*int(padding), int(grd.Height())+2*int(padding))
+
+	if grd.opts.BackgroundColor != nil {
+		ctx.SetColor(grd.opts.BackgroundColor)
+		ctx.Clear()
+	}
+
+	nc = grd.cAxis.Dim()
+
+	pal := grd.opts.Palette.Colors(nc)
 	fmt.Printf("Mapping %d cells\n", grd.NumFilledCells())
 
 	for _, cell := range grd.cells.cells {

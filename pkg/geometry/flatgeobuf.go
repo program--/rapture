@@ -1,5 +1,7 @@
 package geometry
 
-func parseFlatgeobuf(data []byte) (*FeatureCollection, error) {
+import "github.com/paulmach/orb"
+
+func parseFlatgeobuf(data []byte, filter *orb.Bound) (*FeatureCollection, error) {
 	return nil, ErrNotImplemented
 }

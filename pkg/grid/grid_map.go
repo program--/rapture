@@ -2,6 +2,7 @@ package grid
 
 import (
 	"rapture/pkg/geometry"
+	"rapture/pkg/util"
 	"sync"
 
 	"github.com/paulmach/orb"
@@ -35,7 +36,7 @@ func (grd *Grid[T]) WithFeatures(f *geometry.FeatureCollection, property string)
 	return grd
 }
 
-func getProp[T cell_t](p *geojson.Properties, key string) (property T) {
+func getProp[T util.Cell_t](p *geojson.Properties, key string) (property T) {
 	switch any(property).(type) {
 	case int:
 		property = T(p.MustInt(key, 0))

@@ -2,7 +2,6 @@ package grid
 
 import (
 	"fmt"
-	"image/color"
 
 	"github.com/fogleman/gg"
 	"github.com/mazznoer/colorgrad"
@@ -10,8 +9,8 @@ import (
 
 func (grd *Grid[T]) Render(output string, padding uint) {
 	ctx := gg.NewContext(int(grd.Width())+2*int(padding), int(grd.Height())+2*int(padding))
-	ctx.SetColor(color.Black)
-	ctx.Clear()
+	// ctx.SetColor(color.Black)
+	// ctx.Clear()
 
 	nc := grd.cAxis.Dim()
 	pal := colorgrad.OrRd().ColorfulColors(nc)

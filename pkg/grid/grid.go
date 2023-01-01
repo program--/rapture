@@ -2,37 +2,38 @@ package grid
 
 import (
 	"image"
+	"rapture/pkg/util"
 
 	"github.com/paulmach/orb"
 )
 
-type Grid[T cell_t] struct {
+type Grid[T util.Cell_t] struct {
 	cells  *CellArray[T]
 	xAxis  *Axis[float64]
 	yAxis  *Axis[float64]
 	cAxis  *Axis[T]
-	clsc   Coalescer[T]
-	hasher Hasher
+	clsc   util.Coalescer[T]
+	hasher util.Hasher
 }
 
-func NewGrid[T cell_t](xAxis *Axis[float64], yAxis *Axis[float64], points uint) *Grid[T] {
+func NewGrid[T util.Cell_t](xAxis *Axis[float64], yAxis *Axis[float64], points uint) *Grid[T] {
 	grd := &Grid[T]{NewCellArray[T](points), xAxis, yAxis, nil, nil, nil}
-	h := &SimpleHasher{}
+	h := &util.SimpleHasher{}
 	return grd.WithHasher(h)
 }
 
-func NewGridFromBound[T cell_t](b *orb.Bound, width uint, height uint, n uint) *Grid[T] {
+func NewGridFromBound[T util.Cell_t](b *orb.Bound, width uint, height uint, n uint) *Grid[T] {
 	xax := NewAxis(b.Min.X(), b.Max.X(), width)
 	yax := NewAxis(b.Min.Y(), b.Max.Y(), height)
 	return NewGrid[T](xax, yax, n)
 }
 
-func (grd *Grid[T]) WithCoalescer(clsc Coalescer[T]) *Grid[T] {
+func (grd *Grid[T]) WithCoalescer(clsc util.Coalescer[T]) *Grid[T] {
 	grd.clsc = clsc
 	return grd
 }
 
-func (grd *Grid[T]) WithHasher(hasher Hasher) *Grid[T] {
+func (grd *Grid[T]) WithHasher(hasher util.Hasher) *Grid[T] {
 	grd.hasher = hasher
 	return grd
 }
@@ -108,7 +109,7 @@ func (grd *Grid[T]) Index(p *orb.Point) (column int, row int) {
 func (grd *Grid[T]) AddPoint(p *orb.Point, value T) error {
 	column, row := grd.Index(p)
 
-	if err := checkGridIndex(column, row, p); err != nil {
+	if err := util.CheckGridIndex(column, row, p); err != nil {
 		return err
 	}
 
@@ -120,11 +121,11 @@ func (grd *Grid[T]) AddSegment(p1 *orb.Point, p2 *orb.Point, value T) error {
 	c1, r1 := grd.Index(p1)
 	c2, r2 := grd.Index(p2)
 
-	if err := checkGridIndex(c1, r1, p1); err != nil {
+	if err := util.CheckGridIndex(c1, r1, p1); err != nil {
 		return err
 	}
 
-	if err := checkGridIndex(c2, r2, p2); err != nil {
+	if err := util.CheckGridIndex(c2, r2, p2); err != nil {
 		return err
 	}
 

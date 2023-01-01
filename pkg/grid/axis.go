@@ -1,14 +1,15 @@
 package grid
 
 import (
+	"rapture/pkg/util"
 	"sort"
 )
 
-func NewAxis[T numeric_t](from T, to T, length uint) *Axis[T] {
+func NewAxis[T util.Numeric_t](from T, to T, length uint) *Axis[T] {
 	return &Axis[T]{length, from, to, nil}
 }
 
-type Axis[T numeric_t] struct {
+type Axis[T util.Numeric_t] struct {
 	// Length of axis (i.e. number of elements in
 	// sequence between (inclusively) fields from and to.)
 	length uint

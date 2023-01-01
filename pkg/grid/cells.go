@@ -3,29 +3,30 @@ package grid
 import (
 	"fmt"
 	"math"
+	"rapture/pkg/util"
 	"sync"
 	"sync/atomic"
 )
 
-type Cell[T cell_t] struct {
+type Cell[T util.Cell_t] struct {
 	value  T
 	column uint
 	row    uint
 }
 
-type CellSummary[T cell_t] struct {
+type CellSummary[T util.Cell_t] struct {
 	Max T
 	Min T
 	Avg T
 }
 
-type CellArray[T cell_t] struct {
+type CellArray[T util.Cell_t] struct {
 	mu      sync.Mutex
 	cells   []Cell[T]
 	summary *CellSummary[T]
 }
 
-func NewCellArray[T cell_t](size uint) *CellArray[T] {
+func NewCellArray[T util.Cell_t](size uint) *CellArray[T] {
 	cells := new(CellArray[T])
 	cells.Allocate(size)
 	return cells
@@ -71,11 +72,11 @@ func (c *CellArray[T]) Add(column uint, row uint, value T) {
 }
 
 // Applies some operation defined in reducer across all hashed points
-func (c *CellArray[T]) Condense(hasher Hasher, reducer Coalescer[T]) {
+func (c *CellArray[T]) Condense(hasher util.Hasher, reducer util.Coalescer[T]) {
 	wg := sync.WaitGroup{}
 	newLen := uint64(0)
 	cellMap := sync.Map{}
-	cellMapReduce := func(k uint64, v T, r Coalescer[T]) {
+	cellMapReduce := func(k uint64, v T, r util.Coalescer[T]) {
 		defer wg.Done()
 		if value, ok := cellMap.Load(k); ok {
 			cellMap.Store(k, r.Coalesce(value.(T), v))

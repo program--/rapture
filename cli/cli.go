@@ -5,6 +5,7 @@ import (
 	"rapture/pkg/config"
 	"rapture/pkg/geometry"
 	"rapture/pkg/grid"
+	"rapture/pkg/util"
 )
 
 func Run(cfg config.RaptureConfig) {
@@ -20,7 +21,7 @@ func Run(cfg config.RaptureConfig) {
 	fmt.Printf("Creating grid with %d features...\n", nfeatures)
 	grid.
 		NewGridFromBound[float64](features.Extent, cfg.Width, cfg.Height, nfeatures).
-		WithCoalescer(grid.Accumulator[float64]{}).
+		WithCoalescer(util.Accumulator[float64]{}).
 		WithFeatures(features, cfg.Prop).
 		Summarise().
 		Render(cfg.Output, cfg.Padding)

@@ -5,27 +5,34 @@ import (
 	"image/color"
 	"rapture/pkg/util"
 
+	"github.com/briandowns/spinner"
 	"github.com/mazznoer/colorgrad"
 	"github.com/paulmach/orb"
 )
 
 type Grid[T util.Cell_t] struct {
-	cells  *CellArray[T]
-	xAxis  *Axis[float64]
-	yAxis  *Axis[float64]
-	cAxis  *Axis[T]
-	clsc   util.Coalescer[T]
-	hasher util.Hasher
-	opts   *GridOptions
+	cells   *CellArray[T]
+	xAxis   *Axis[float64]
+	yAxis   *Axis[float64]
+	cAxis   *Axis[T]
+	clsc    util.Coalescer[T]
+	hasher  util.Hasher
+	opts    *GridOptions
+	spinner *spinner.Spinner
 }
 
-func NewGrid[T util.Cell_t](xAxis *Axis[float64], yAxis *Axis[float64], points uint, opts *GridOptions) *Grid[T] {
-	grd := &Grid[T]{NewCellArray[T](points), xAxis, yAxis, nil, nil, nil, opts}
+func NewGrid[T util.Cell_t](xAxis *Axis[float64], yAxis *Axis[float64], points uint, opts *GridOptions, s *spinner.Spinner) *Grid[T] {
+	grd := &Grid[T]{NewCellArray[T](points), xAxis, yAxis, nil, nil, nil, opts, s}
 	h := &util.SimpleHasher{}
 	return grd.WithHasher(h)
 }
 
-func NewGridFromBound[T util.Cell_t](b *orb.Bound, width uint, height uint, n uint) *Grid[T] {
+func NewGridFromBound[T util.Cell_t](b *orb.Bound, width uint, height uint, n uint, s *spinner.Spinner) *Grid[T] {
+	if s != nil {
+		s.Prefix = "rapture: 2/4 "
+		s.Suffix = " generating grid from bounds"
+	}
+
 	xax := NewAxis(b.Min.X(), b.Max.X(), width)
 	yax := NewAxis(b.Min.Y(), b.Max.Y(), height)
 
@@ -38,7 +45,7 @@ func NewGridFromBound[T util.Cell_t](b *orb.Bound, width uint, height uint, n ui
 		Bins:            &default_bins,
 	}
 
-	return NewGrid[T](xax, yax, n, opts)
+	return NewGrid[T](xax, yax, n, opts, s)
 }
 
 func (grd *Grid[T]) WithCoalescer(clsc util.Coalescer[T]) *Grid[T] {

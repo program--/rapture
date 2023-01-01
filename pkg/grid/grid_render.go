@@ -1,13 +1,16 @@
 package grid
 
 import (
-	"fmt"
-
 	"github.com/fogleman/gg"
 )
 
 func (grd *Grid[T]) Render(output string, padding uint) {
 	var nc uint
+
+	if grd.spinner != nil {
+		grd.spinner.Prefix = "rapture: 4/4 "
+		grd.spinner.Suffix = " rendering grid to image"
+	}
 
 	ctx := gg.NewContext(int(grd.Width())+2*int(padding), int(grd.Height())+2*int(padding))
 
@@ -18,8 +21,7 @@ func (grd *Grid[T]) Render(output string, padding uint) {
 
 	nc = grd.cAxis.Dim()
 
-	pal := grd.opts.Palette.Colors(nc)
-	fmt.Printf("Mapping %d cells\n", grd.NumFilledCells())
+	pal := grd.opts.Palette.ColorfulColors(nc)
 
 	for _, cell := range grd.cells.cells {
 		ctx.Push()

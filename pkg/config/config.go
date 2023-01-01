@@ -15,7 +15,7 @@ type RaptureConfig struct {
 	Height          uint   `flag:"height" usage:"height of output" default:"800" alias:"h"`
 	Padding         uint   `flag:"padding" usage:"padding around main image" alias:"pad"`
 	Bins            uint   `flag:"bins" usage:"number of bins" default:"10"`
-	Palette         string `flag:"palette" usage:"color palette to use for visualization, see Golang package 'colorgrad' for preset palettes" default:"inferno" alias:"pal"`
+	Palette         string `flag:"palette" usage:"color palette to use for visualization, see Golang package 'colorgrad' for preset palettes" default:"orrd" alias:"pal"`
 	BackgroundColor string `flag:"background" usage:"background color, as hex" alias:"bg"`
 	Bbox            string `flag:"bbox" usage:"string delimited bounding box in order: xmax, xmin, ymax, ymin" alias:"b"`
 	Prof            string `flag:"prof" usage:"write cpu profile to file"`

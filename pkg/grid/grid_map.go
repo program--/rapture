@@ -10,6 +10,11 @@ import (
 )
 
 func (grd *Grid[T]) WithFeatures(f *geometry.FeatureCollection, property string) *Grid[T] {
+	if grd.spinner != nil {
+		grd.spinner.Prefix = "rapture: 3/4 "
+		grd.spinner.Suffix = " mapping features to grid cells"
+	}
+
 	wg := &sync.WaitGroup{}
 	mapToGrid := func(feature *geometry.Feature) {
 		defer wg.Done()

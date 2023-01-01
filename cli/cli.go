@@ -9,13 +9,20 @@ import (
 	"rapture/pkg/grid"
 	"rapture/pkg/util"
 	"strings"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/mazznoer/colorgrad"
 )
 
 func Run(cfg config.RaptureConfig) {
-	// Parse file
-	fmt.Println("Parsing")
+	spinner := spinner.New(spinner.CharSets[24], 100*time.Millisecond)
+	spinner.FinalMSG = fmt.Sprintf("Generated output image at %s\n", cfg.Output)
+	spinner.Color("green", "bold")
+	spinner.Start()
+
+	spinner.Prefix = "rapture: 1/4 "
+	spinner.Suffix = fmt.Sprintf(" parsing features from %s", cfg.Path)
 	features, err := geometry.NewFeatureCollection(cfg.Path, nil)
 	if err != nil {
 		panic(err)
@@ -29,19 +36,25 @@ func Run(cfg config.RaptureConfig) {
 		Bins:            &cfg.Bins,
 	}
 
-	fmt.Printf("Creating grid with %d features...\n", nfeatures)
 	grid.
-		NewGridFromBound[float64](features.Extent, cfg.Width, cfg.Height, nfeatures).
+		NewGridFromBound[float64](features.Extent, cfg.Width, cfg.Height, nfeatures, spinner).
 		WithOptions(options).
 		WithCoalescer(coalescer).
 		WithFeatures(features, cfg.Prop).
+		Condense().
 		Summarise().
 		Render(cfg.Output, cfg.Padding)
+
+	spinner.Stop()
 }
 
 func parseColorFromString(s string) color.Color {
 	c := new(color.NRGBA)
 	c.A = 0xff
+
+	if s == "" {
+		return nil
+	}
 
 	if s[0] != '#' {
 		panic(errInvalidFormat)

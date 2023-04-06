@@ -7,7 +7,7 @@ require (
 	github.com/fogleman/gg v1.3.0
 	github.com/json-iterator/go v1.1.12
 	github.com/mazznoer/colorgrad v0.9.1
-	github.com/paulmach/orb v0.7.1
+	github.com/paulmach/orb v0.9.0
 )
 
 require (
@@ -19,6 +19,7 @@ require (
 	github.com/mazznoer/csscolorparser v0.1.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	go.mongodb.org/mongo-driver v1.11.1 // indirect
 	golang.org/x/image v0.5.0 // indirect
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/term v0.1.0 // indirect

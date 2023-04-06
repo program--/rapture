@@ -4,9 +4,7 @@ import (
 	"github.com/fogleman/gg"
 )
 
-func (grd *Grid[T]) Render(output string, padding uint) {
-	var nc uint
-
+func (grd *Grid[T]) Render(output string, padding uint, radius float64) {
 	if grd.spinner != nil {
 		grd.spinner.Prefix = "rapture: 4/4 "
 		grd.spinner.Suffix = " rendering grid to image"
@@ -19,14 +17,13 @@ func (grd *Grid[T]) Render(output string, padding uint) {
 		ctx.Clear()
 	}
 
-	nc = grd.cAxis.Dim()
-
+	nc := grd.cAxis.Dim()
 	pal := grd.opts.Palette.ColorfulColors(nc)
 
 	for _, cell := range grd.cells.cells {
 		ctx.Push()
 		ctx.SetColor(pal[grd.cAxis.Index(cell.value, false)])
-		ctx.DrawPoint(float64(cell.column+padding), float64(cell.row+padding), 0.075)
+		ctx.DrawPoint(float64(cell.column+padding), float64(cell.row+padding), radius)
 		ctx.Fill()
 		ctx.Pop()
 	}

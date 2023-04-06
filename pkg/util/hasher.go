@@ -31,3 +31,33 @@ func (SimpleHasher) Unhash(z uint64) (uint, uint) {
 	}
 
 }
+
+type MortonHasher struct{}
+
+func (MortonHasher) split(a uint) uint64 {
+	x := uint64(a) & 0x1fffff
+	x = (x | x<<32) & 0x1f00000000ffff
+	x = (x | x<<16) & 0x1f0000ff0000ff
+	x = (x | x<<8) & 0x100f00f00f00f00f
+	x = (x | x<<4) & 0x10c30c30c30c30c3
+	x = (x | x<<2) & 0x1249249249249249
+	return x
+}
+
+func (MortonHasher) compact(z uint64) uint {
+	a := z & 0x1249249249249249
+	a = (a ^ (a >> 1)) & 0x10c30c30c30c30c3
+	a = (a ^ (a >> 2)) & 0x100f00f00f00f00f
+	a = (a ^ (a >> 4)) & 0x1f0000ff0000ff
+	a = (a ^ (a >> 8)) & 0x1f00000000ffff
+	a = (a ^ (a >> 16)) & 0x1fffff
+	return uint(a)
+}
+
+func (m MortonHasher) Hash(x uint, y uint) uint64 {
+	return uint64(0) | m.split(x) | (m.split(y) << 1)
+}
+
+func (m MortonHasher) Unhash(z uint64) (uint, uint) {
+	return m.compact(z), m.compact(z >> 1)
+}
